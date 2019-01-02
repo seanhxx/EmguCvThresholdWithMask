@@ -6,6 +6,9 @@ namespace EmguCvThresholdWithMask {
 	ThresholdMasked::ThresholdMasked() {}
 	ThresholdMasked::~ThresholdMasked() {}
 	ThresholdMasked::!ThresholdMasked() {
+		if (_srcMatData != nullptr) { delete _srcMatData; }
+		if (_maskMatData != nullptr) { delete _maskMatData; }
+		if (_dstImage != nullptr) { delete _dstImage; }
 		GC::Collect();
 	}
 
@@ -30,9 +33,9 @@ namespace EmguCvThresholdWithMask {
 		int srcWidth = src->Width;
 		int srcHeight = src->Height;
 
-		cli::array<System::Byte>^ srcMatData = gcnew cli::array<System::Byte>(srcWidth*srcHeight);
-		src->CopyTo(srcMatData);
-		pin_ptr<System::Byte> pSrcMatData = &srcMatData[0];
+		_srcMatData = gcnew cli::array<System::Byte>(srcWidth*srcHeight);
+		src->CopyTo(_srcMatData);
+		pin_ptr<System::Byte> pSrcMatData = &_srcMatData[0];
 		unsigned char* pbySrcMatData = pSrcMatData;
 		unsigned char* srcCvMatData = reinterpret_cast<unsigned char*>(pbySrcMatData);
 		cv::Mat1b* srcCvMat = new cv::Mat1b(src->Rows, src->Cols, srcCvMatData);
@@ -40,9 +43,9 @@ namespace EmguCvThresholdWithMask {
 		cv::Mat1b* maskCvMat;
 		if (mask != nullptr) 
 		{
-			cli::array<System::Byte>^ maskMatData = gcnew cli::array<System::Byte>(srcWidth*srcHeight);
-			mask->CopyTo(maskMatData);
-			pin_ptr<System::Byte> pMaskMatData = &maskMatData[0];
+			_maskMatData = gcnew cli::array<System::Byte>(srcWidth*srcHeight);
+			mask->CopyTo(_maskMatData);
+			pin_ptr<System::Byte> pMaskMatData = &_maskMatData[0];
 			unsigned char* pbyMaskMatData = pMaskMatData;
 			unsigned char* maskCvMatData = reinterpret_cast<unsigned char*>(pbyMaskMatData);
 			maskCvMat = new cv::Mat1b(mask->Rows, mask->Cols, maskCvMatData);
@@ -57,13 +60,18 @@ namespace EmguCvThresholdWithMask {
 
 		//Convert cv::Mat to Emgu::CV::Mat
 		IplImage* dstCvIplImage = new IplImage(*dstCvMat);
-		Emgu::CV::Image<Emgu::CV::Structure::Gray, Byte>^ dstImage = gcnew Emgu::CV::Image<Emgu::CV::Structure::Gray, Byte>(src->Width, src->Height);
+		_dstImage = gcnew Emgu::CV::Image<Emgu::CV::Structure::Gray, Byte>(src->Width, src->Height);
 
 		System::IntPtr iplImageIntPtr(dstCvIplImage);
-		System::IntPtr imageIntPtr(dstImage->Ptr.ToPointer());
+		System::IntPtr imageIntPtr(_dstImage->Ptr.ToPointer());
 		System::IntPtr nullIntPtr(nullptr);
 		Emgu::CV::CvInvoke::cvCopy(iplImageIntPtr, imageIntPtr, nullIntPtr);
-		dst = dstImage->Mat;
+		dst = _dstImage->Mat;
+
+		delete srcCvMat;
+		delete dstCvMat;
+		delete maskCvMat;
+		delete dstCvIplImage;
 
 		return cvth_value;
 	}

@@ -17,7 +17,12 @@ namespace EmguCvThresholdWithMask {
 		ThresholdMasked();
 		~ThresholdMasked();
 
-		double Threshold(Emgu::CV::Mat ^src, Emgu::CV::Mat ^% dst, 
+		static double Threshold(Emgu::CV::Mat ^src, Emgu::CV::Mat ^% dst, 
 			double thresh, double maxval, Emgu::CV::CvEnum::ThresholdType type, Emgu::CV::Mat ^mask);
+
+	private:
+		static cli::array<System::Byte>^ _srcMatData;
+		static cli::array<System::Byte>^ _maskMatData;
+		static Emgu::CV::Image<Emgu::CV::Structure::Gray, Byte>^ _dstImage;
 	};
 }
