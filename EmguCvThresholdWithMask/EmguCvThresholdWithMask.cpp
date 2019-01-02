@@ -12,7 +12,7 @@ namespace EmguCvThresholdWithMask {
 		GC::Collect();
 	}
 
-	double ThresholdMasked::Threshold(Emgu::CV::Mat ^ src, Emgu::CV::Mat ^% dst, 
+	double ThresholdMasked::Threshold(Emgu::CV::Mat ^src, Emgu::CV::Mat ^% dst, 
 		double thresh, double maxval, Emgu::CV::CvEnum::ThresholdType type, Emgu::CV::Mat ^ mask)
 	{
 		if (src->NumberOfChannels != 1) {
@@ -33,7 +33,9 @@ namespace EmguCvThresholdWithMask {
 		int srcWidth = src->Width;
 		int srcHeight = src->Height;
 
-		_srcMatData = gcnew cli::array<System::Byte>(srcWidth*srcHeight);
+		if (_srcMatData->Length != (srcWidth * srcHeight)) {
+			System::Array::Resize(_srcMatData, srcWidth*srcHeight);
+		}
 		src->CopyTo(_srcMatData);
 		pin_ptr<System::Byte> pSrcMatData = &_srcMatData[0];
 		unsigned char* pbySrcMatData = pSrcMatData;
@@ -43,7 +45,9 @@ namespace EmguCvThresholdWithMask {
 		cv::Mat1b* maskCvMat;
 		if (mask != nullptr) 
 		{
-			_maskMatData = gcnew cli::array<System::Byte>(srcWidth*srcHeight);
+			if (_maskMatData->Length != (mask->Width * mask->Height)) {
+				System::Array::Resize(_maskMatData, mask->Width * mask->Height);
+			}
 			mask->CopyTo(_maskMatData);
 			pin_ptr<System::Byte> pMaskMatData = &_maskMatData[0];
 			unsigned char* pbyMaskMatData = pMaskMatData;
@@ -60,8 +64,10 @@ namespace EmguCvThresholdWithMask {
 
 		//Convert cv::Mat to Emgu::CV::Mat
 		IplImage* dstCvIplImage = new IplImage(*dstCvMat);
-		_dstImage = gcnew Emgu::CV::Image<Emgu::CV::Structure::Gray, Byte>(src->Width, src->Height);
-
+		if (_dstImage->Width != src->Width || _dstImage->Height != src->Height) {
+			delete _dstImage;
+			_dstImage = gcnew Emgu::CV::Image<Emgu::CV::Structure::Gray, Byte>(src->Width, src->Height);
+		}
 		System::IntPtr iplImageIntPtr(dstCvIplImage);
 		System::IntPtr imageIntPtr(_dstImage->Ptr.ToPointer());
 		System::IntPtr nullIntPtr(nullptr);
